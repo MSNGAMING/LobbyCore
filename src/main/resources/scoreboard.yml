@@ -1,0 +1,23 @@
+# ==============================================================================
+#                       LOBBYCORE - SCOREBOARD CONFIGURATION
+# ==============================================================================
+# Flicker-free sidebar scoreboard updated asynchronously.
+# Up to 15 lines supported.
+# Placeholders: %player%, %ping%, %online%, %max_players%, %world%, %health%
+# ==============================================================================
+
+scoreboard:
+  enabled: true
+  title: "<bold><gradient:#00f2fe:#4facfe>VOLTIC NETWORK</gradient></bold>"
+  update-interval-ticks: 20
+
+  lines:
+    - "<dark_gray>--------------------</dark_gray>"
+    - "<white>Player: <yellow>%player%</yellow></white>"
+    - "<white>Ping: <green>%ping%ms</green></white>"
+    - ""
+    - "<white>Lobby World: <aqua>%world%</aqua></white>"
+    - "<white>Online: <green>%online%</green>/<green>%max_players%</green></white>"
+    - ""
+    - "<white>Store: <gold>store.voltic.net</gold></white>"
+    - "<dark_gray>--------------------</dark_gray>"

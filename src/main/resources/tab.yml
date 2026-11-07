@@ -1,0 +1,22 @@
+# ==============================================================================
+#                        LOBBYCORE - TABLIST CONFIGURATION
+# ==============================================================================
+# Async-updated PlayerList Header & Footer using Adventure MiniMessage.
+# Placeholders: %player%, %ping%, %online%, %max_players%, %world%
+# ==============================================================================
+
+tab:
+  enabled: true
+  update-interval-ticks: 20
+
+  header:
+    - ""
+    - "<bold><gradient:#00f2fe:#4facfe>✦ VOLTIC NETWORK ✦</gradient></bold>"
+    - "<gray>High-Performance Modular Minecraft Server</gray>"
+    - ""
+
+  footer:
+    - ""
+    - "<gray>Online: <green>%online%</green>/<green>%max_players%</green>  |  Ping: <green>%ping%ms</green></gray>"
+    - "<yellow>store.voltic.net <gray>•</gray> discord.gg/voltic</yellow>"
+    - ""

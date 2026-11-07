@@ -1,0 +1,29 @@
+# ==============================================================================
+#                         LOBBYCORE - MOTD CONFIGURATION
+# ==============================================================================
+# Configures the server list ping response using Paper's PaperServerListPingEvent.
+# Supports Adventure MiniMessage formatting, fake player counts, and hover tooltips.
+# ==============================================================================
+
+motd:
+  enabled: true
+  line1: "<gradient:#00f2fe:#4facfe><bold>VOLTIC NETWORK</bold></gradient> <gray>•</gray> <yellow>1.21 - 1.26</yellow> <gray>[NEW]</gray>"
+  line2: "<white>Modular Next-Gen Paper Lobby System</white>"
+
+  override-max-players: false
+  fake-max-players: 1000
+
+  override-version: false
+  version-text: "Paper 1.21 - 1.26"
+
+  hover:
+    enabled: true
+    lines:
+      - "<gradient:#00f2fe:#4facfe><bold>Welcome to Voltic Network!</bold></gradient>"
+      - "<white>Click to join our active servers:</white>"
+      - ""
+      - "<gold>  ⚔ Survival SMP</gold>"
+      - "<aqua>  ★ SkyBlock Islands</aqua>"
+      - "<red>  ✦ BedWars & Duels</red>"
+      - ""
+      - "<green>✔ Version 1.21 - 1.26 Supported!</green>"

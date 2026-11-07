@@ -1,0 +1,37 @@
+# ==============================================================================
+#                       LOBBYCORE - LOBBIES CONFIGURATION
+# ==============================================================================
+# Define multiple lobby worlds or sub-lobbies with spawn coordinates and limits.
+# Auto-balance sends incoming players to the lobby with the fewest players.
+# ==============================================================================
+
+settings:
+  default-lobby: "lobby-1"
+  auto-balance: true
+
+lobbies:
+  lobby-1:
+    display-name: "<gradient:#00f2fe:#4facfe>Main Lobby #1</gradient>"
+    max-players: 100
+    permission: ""
+    enabled: true
+    spawn:
+      world: "world"
+      x: 0.5
+      y: 65.0
+      z: 0.5
+      yaw: 0.0
+      pitch: 0.0
+
+  lobby-2:
+    display-name: "<gradient:#ffaa00:#ff5500>Secondary Lobby #2</gradient>"
+    max-players: 100
+    permission: ""
+    enabled: true
+    spawn:
+      world: "world"
+      x: 100.5
+      y: 65.0
+      z: 100.5
+      yaw: 90.0
+      pitch: 0.0

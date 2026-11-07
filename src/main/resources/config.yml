@@ -1,0 +1,70 @@
+# ==============================================================================
+#                      LOBBYCORE - MAIN CONFIGURATION
+# ==============================================================================
+# All text supports Kyori Adventure MiniMessage formatting:
+# Examples: <gradient:#00f2fe:#4facfe>Text</gradient>, <bold><gold>Text</gold></bold>
+# Legacy codes (&a, &b, &#RRGGBB) are also automatically supported!
+# ==============================================================================
+
+protection:
+  # If true, all worlds on this server will receive the lobby protections.
+  all-worlds: false
+
+  # Worlds designated as protected lobby spaces.
+  lobby-worlds:
+    - "world"
+    - "lobby"
+
+  # Game rules
+  pvp-enabled: false
+  block-break: false
+  block-place: false
+  hunger-depletion: false
+  mob-spawning: false
+  weather-lock: true
+  fall-damage: false
+  drowning-damage: false
+  item-drop: false
+  item-pickup: false
+
+  # Void fall protection: catches falling players and teleports them to safety
+  void-fall:
+    enabled: true
+    threshold-y: -50.0
+
+join:
+  # Automatically teleport to the optimal lobby on login
+  teleport-to-lobby: true
+
+  # Force Adventure gamemode in lobby
+  force-adventure-mode: true
+
+  # Restore full health and hunger
+  heal-on-join: true
+
+  # Play chime sound on join
+  play-sound: true
+
+  # Broadcast custom join message to everyone
+  custom-message-enabled: false
+  message: "<gray>[<green>+</green>]</gray> <yellow>%player%</yellow> <gray>joined the lobby.</gray>"
+
+  # Private welcome message sent only to the joining player
+  welcome-text:
+    - ""
+    - "<gradient:#00f2fe:#4facfe><bold>       WELCOME TO VOLTIC NETWORK</bold></gradient>"
+    - "<gray>     Experience high-performance Minecraft gaming.</gray>"
+    - ""
+    - "<white>  • Explore game modes using the server selector NPC!</white>"
+    - "<white>  • Need help? Type <yellow>/help</yellow> or ask our staff.</white>"
+    - ""
+
+quit:
+  custom-message-enabled: false
+  message: "<gray>[<red>-</red>]</gray> <yellow>%player%</yellow> <gray>left the lobby.</gray>"
+
+hotbar:
+  # Give interactive hotbar items to players when they join
+  enabled: true
+  # Prevent moving, dropping, or swapping hotbar items in inventory
+  lock-slots: true

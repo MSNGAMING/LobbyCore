@@ -1,0 +1,41 @@
+# ==============================================================================
+#                      LOBBYCORE - HOLOGRAMS CONFIGURATION
+# ==============================================================================
+# Uses modern Paper 1.21+ TextDisplay entities. Zero NMS, zero tick overhead.
+# Billboard options: CENTER, FIXED, HORIZONTAL, VERTICAL
+# ==============================================================================
+
+holograms:
+  welcome-holo:
+    billboard: "CENTER"
+    shadow: true
+    location:
+      world: "world"
+      x: 0.5
+      y: 66.5
+      z: 0.5
+      yaw: 0.0
+      pitch: 0.0
+    lines:
+      - "<gradient:#ffaa00:#ff5500><bold>✦ VOLTIC NETWORK ✦</bold></gradient>"
+      - "<gray>Welcome, <yellow>%player%</yellow>!</gray>"
+      - ""
+      - "<white>Online Players: <green>%online%</green>/<green>%max_players%</green></white>"
+      - "<yellow>Visit our store at: <gold>store.voltic.net</gold></yellow>"
+
+  rules-holo:
+    billboard: "CENTER"
+    shadow: true
+    location:
+      world: "world"
+      x: 5.5
+      y: 66.0
+      z: 5.5
+      yaw: 45.0
+      pitch: 0.0
+    lines:
+      - "<red><bold>SERVER RULES</bold></red>"
+      - "<gray>1. Be respectful to all players.</gray>"
+      - "<gray>2. No cheating, hacking, or exploiting.</gray>"
+      - "<gray>3. Keep chat clean and appropriate.</gray>"
+      - "<gray>4. Have fun and enjoy your stay!</gray>"

@@ -1,0 +1,22 @@
+# Maven Build Output
+target/
+*.class
+
+# IDE and Editor Files
+.idea/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+.vscode/
+
+# Logs and OS Artifacts
+*.log
+.DS_Store
+Thumbs.db
+
+# Environment and Scratch
+*.tmp
+*.bak

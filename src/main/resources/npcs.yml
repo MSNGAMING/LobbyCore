@@ -1,0 +1,54 @@
+# ==============================================================================
+#                        LOBBYCORE - NPCS CONFIGURATION
+# ==============================================================================
+# Uses modern Paper Interaction hitboxes coupled with visual entities.
+# Entity types: VILLAGER, ALLAY, IRON_GOLEM, ARMOR_STAND, ZOMBIE, SKELETON, etc.
+# Action types:
+#   - COMMAND: Run command ([player] /command or [console] command)
+#   - TELEPORT: Teleport to lobby ID
+#   - MESSAGE: Send MiniMessage to player
+#   - GUI: Open Admin Config GUI (if player has permission)
+# ==============================================================================
+
+npcs:
+  server-selector:
+    type: "VILLAGER"
+    name: "<gradient:#00f2fe:#4facfe><bold>Game Selector</bold></gradient> <gray>(Click)</gray>"
+    location:
+      world: "world"
+      x: 3.5
+      y: 64.0
+      z: 3.5
+      yaw: 135.0
+      pitch: 0.0
+    action:
+      type: "MESSAGE"
+      value: "<green>Opening game selector... Choose a realm!</green>"
+
+  hub-npc:
+    type: "ALLAY"
+    name: "<gradient:#ffaa00:#ff5500><bold>Lobby Selector</bold></gradient>"
+    location:
+      world: "world"
+      x: -3.5
+      y: 64.0
+      z: 3.5
+      yaw: -135.0
+      pitch: 0.0
+    action:
+      type: "COMMAND"
+      value: "[player] /lobby"
+
+  admin-npc:
+    type: "IRON_GOLEM"
+    name: "<red><bold>Admin Control Panel</bold></red>"
+    location:
+      world: "world"
+      x: 0.5
+      y: 64.0
+      z: -5.5
+      yaw: 0.0
+      pitch: 0.0
+    action:
+      type: "GUI"
+      value: "admin"

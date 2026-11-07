@@ -1,0 +1,61 @@
+name: LobbyCore
+version: 1.0.0
+main: com.voltic.lobby.LobbyPlugin
+api-version: '1.21'
+author: Voltic
+description: High-performance, modular Lobby plugin for Paper/Purpur 1.21 - 1.26.
+softdepend: [PlaceholderAPI]
+
+commands:
+  lobby:
+    description: Teleport to a lobby or the auto-balanced hub.
+    aliases: [hub, l, spawn]
+  setlobby:
+    description: Set the spawn location for a lobby world.
+    permission: lobby.admin.setlobby
+    aliases: [sethub]
+  hologram:
+    description: Manage modern TextDisplay holograms.
+    permission: lobby.admin.hologram
+    aliases: [holo, hd]
+  npc:
+    description: Manage Paper Interaction and visual NPCs.
+    permission: lobby.admin.npc
+  lobbyadmin:
+    description: Open the interactive In-Game Configuration GUI or hot-reload.
+    permission: lobby.admin.gui
+    aliases: [lobbygui, hubadmin]
+
+permissions:
+  lobby.admin.*:
+    description: Full administrative access to LobbyCore.
+    default: op
+    children:
+      lobby.admin.gui: true
+      lobby.admin.setlobby: true
+      lobby.admin.hologram: true
+      lobby.admin.npc: true
+      lobby.admin.build: true
+      lobby.chat.bypass: true
+      lobby.chat.color: true
+  lobby.admin.gui:
+    description: Access to the in-game interactive GUI control panel.
+    default: op
+  lobby.admin.setlobby:
+    description: Allows setting lobby spawn locations.
+    default: op
+  lobby.admin.hologram:
+    description: Allows creating and editing TextDisplay holograms.
+    default: op
+  lobby.admin.npc:
+    description: Allows creating and managing NPCs.
+    default: op
+  lobby.admin.build:
+    description: Bypass block break and place restrictions in protected lobby worlds.
+    default: op
+  lobby.chat.bypass:
+    description: Bypass anti-spam and anti-swear filters.
+    default: op
+  lobby.chat.color:
+    description: Allows using color and MiniMessage formatting in chat.
+    default: op
