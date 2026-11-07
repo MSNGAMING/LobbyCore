@@ -231,6 +231,10 @@ public class WorldProtectionListener implements Listener {
     }
 
     private void rescueFromVoid(@NotNull Player player) {
+        if (!plugin.getLobbyManager().hasLobbiesSet()) {
+            return;
+        }
+
         long now = System.currentTimeMillis();
         Long last = voidRescueCooldown.get(player.getUniqueId());
         if (last != null && (now - last) < 2000) {
@@ -239,7 +243,8 @@ public class WorldProtectionListener implements Listener {
         voidRescueCooldown.put(player.getUniqueId(), now);
 
         LobbyData best = plugin.getLobbyManager().getBestLobby(player);
-        Location target = (best != null) ? best.getSpawnLocation() : player.getWorld().getSpawnLocation();
+        if (best == null) return;
+        Location target = best.getSpawnLocation();
 
         player.getScheduler().run(plugin, task -> {
             player.setFallDistance(0);

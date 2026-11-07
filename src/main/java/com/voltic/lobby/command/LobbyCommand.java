@@ -33,6 +33,11 @@ public class LobbyCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        if (!plugin.getLobbyManager().hasLobbiesSet()) {
+            player.sendMessage(TextUtil.parse("<red>The lobby spawn point has not been configured yet!</red> <gray>Please ask an administrator to set one via <yellow>/setlobby</yellow>.</gray>"));
+            return true;
+        }
+
         if (args.length == 0) {
             LobbyData best = plugin.getLobbyManager().getBestLobby(player);
             if (best == null) {

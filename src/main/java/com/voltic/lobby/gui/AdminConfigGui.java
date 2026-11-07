@@ -211,6 +211,24 @@ public class AdminConfigGui {
                 .tagString(ACTION_KEY, "TOGGLE_VOID")
                 .build());
 
+        // Slot 40: Lobby Worlds Management
+        int lobbyCount = plugin.getLobbyManager().getLobbies().size();
+        boolean hasSet = plugin.getLobbyManager().hasLobbiesSet();
+        inv.setItem(40, ItemBuilder.from(Material.BEACON)
+                .name("<gradient:#00f2fe:#4facfe><bold>LOBBY WORLDS MANAGER</bold></gradient>")
+                .loreStrings(
+                        "<gray>Configure multi-lobby instances, spawns,</gray>",
+                        "<gray>world balancing, and player capacities.</gray>",
+                        "",
+                        "<white>Configured Lobbies: <gold>" + lobbyCount + "</gold>",
+                        "<white>Lobby Status: " + statusTag(hasSet),
+                        "",
+                        "<yellow>▶ Click to Open Worlds Manager</yellow>"
+                )
+                .glow(true)
+                .tagString(ACTION_KEY, "OPEN_LOBBY_MANAGER")
+                .build());
+
         // Slot 49: Hot-Reload Everything
         inv.setItem(49, ItemBuilder.from(Material.NETHER_STAR)
                 .name("<gradient:#00ff87:#60efff><bold>HOT-RELOAD ALL CONFIGURATIONS</bold></gradient>")

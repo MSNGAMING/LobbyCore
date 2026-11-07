@@ -65,7 +65,7 @@
 | `/setlobby [id]` | `/sethub` | Set spawn location for a lobby | `lobby.admin.setlobby` |
 | `/hologram <create\|delete\|addline\|list\|reload>` | `/holo`, `/hd` | Manage `TextDisplay` holograms | `lobby.admin.hologram` |
 | `/npc <create\|delete\|action\|movehere\|list>` | | Manage `Interaction` NPCs | `lobby.admin.npc` |
-| `/lobbyadmin [reload]` | `/lobbygui`, `/hubadmin`| Open interactive GUI or hot-reload | `lobby.admin.gui` |
+| `/lobbyadmin [reload\|lobbies\|worlds]` | `/lobbygui`, `/hubadmin`| Open interactive GUI, manage lobby worlds, or hot-reload | `lobby.admin.gui` |
 
 ### Key Permissions
 * `lobby.admin.*` – Full access to all administrative commands and bypasses.

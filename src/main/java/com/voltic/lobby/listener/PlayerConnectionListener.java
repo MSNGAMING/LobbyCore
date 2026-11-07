@@ -40,11 +40,17 @@ public class PlayerConnectionListener implements Listener {
             event.joinMessage(TextUtil.parsePlayer(player, msg));
         }
 
-        // Teleport to lobby on join
+        // Teleport to lobby on join only if a lobby has been configured
         if (mainConfig.getBoolean("join.teleport-to-lobby", true)) {
-            LobbyData bestLobby = plugin.getLobbyManager().getBestLobby(player);
-            if (bestLobby != null) {
-                player.teleportAsync(bestLobby.getSpawnLocation());
+            if (plugin.getLobbyManager().hasLobbiesSet()) {
+                LobbyData bestLobby = plugin.getLobbyManager().getBestLobby(player);
+                if (bestLobby != null) {
+                    player.teleportAsync(bestLobby.getSpawnLocation());
+                }
+            } else {
+                if (player.hasPermission("lobby.admin.setlobby")) {
+                    player.sendMessage(TextUtil.parse("<yellow>[LobbyCore]</yellow> <red>No lobby spawn has been configured yet!</red> <gray>Stand at your desired hub location and run</gray> <yellow>/setlobby</yellow> <gray>or open</gray> <yellow>/lobbyadmin</yellow> <gray>to manage lobby worlds.</gray>"));
+                }
             }
         }
 
@@ -108,9 +114,11 @@ public class PlayerConnectionListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerRespawn(PlayerRespawnEvent event) {
         Player player = event.getPlayer();
-        LobbyData bestLobby = plugin.getLobbyManager().getBestLobby(player);
-        if (bestLobby != null) {
-            event.setRespawnLocation(bestLobby.getSpawnLocation());
+        if (plugin.getLobbyManager().hasLobbiesSet()) {
+            LobbyData bestLobby = plugin.getLobbyManager().getBestLobby(player);
+            if (bestLobby != null) {
+                event.setRespawnLocation(bestLobby.getSpawnLocation());
+            }
         }
     }
 }

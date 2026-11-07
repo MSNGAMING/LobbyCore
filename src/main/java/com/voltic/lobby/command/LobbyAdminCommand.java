@@ -2,6 +2,7 @@ package com.voltic.lobby.command;
 
 import com.voltic.lobby.LobbyPlugin;
 import com.voltic.lobby.gui.AdminConfigGui;
+import com.voltic.lobby.gui.LobbyManagementGui;
 import com.voltic.lobby.util.TextUtil;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Command for opening the Admin GUI control panel or triggering hot-reloads.
+ * Command for opening the Admin GUI control panel, Lobby Worlds Manager, or triggering hot-reloads.
  */
 public class LobbyAdminCommand implements CommandExecutor, TabCompleter {
 
@@ -31,10 +32,20 @@ public class LobbyAdminCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
-            plugin.reloadPlugin();
-            sender.sendMessage(TextUtil.parse("<green><bold>Lobby plugin hot-reloaded successfully!</bold></green>"));
-            return true;
+        if (args.length > 0) {
+            String sub = args[0].toLowerCase();
+            if (sub.equals("reload")) {
+                plugin.reloadPlugin();
+                sender.sendMessage(TextUtil.parse("<green><bold>Lobby plugin hot-reloaded successfully!</bold></green>"));
+                return true;
+            } else if (sub.equals("lobbies") || sub.equals("worlds")) {
+                if (sender instanceof Player player) {
+                    LobbyManagementGui.open(player, plugin);
+                    return true;
+                }
+                sender.sendMessage(TextUtil.parse("<red>Only in-game players can open the Lobby Worlds Manager GUI.</red>"));
+                return true;
+            }
         }
 
         if (sender instanceof Player player) {
@@ -49,7 +60,7 @@ public class LobbyAdminCommand implements CommandExecutor, TabCompleter {
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length == 1) {
-            return List.of("reload", "gui");
+            return List.of("reload", "gui", "lobbies", "worlds");
         }
         return List.of();
     }

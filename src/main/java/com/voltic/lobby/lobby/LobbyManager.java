@@ -4,7 +4,6 @@ import com.voltic.lobby.LobbyPlugin;
 import com.voltic.lobby.util.LocationUtil;
 import com.voltic.lobby.util.TextUtil;
 import lombok.Getter;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.World;
@@ -19,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Manages lobby registration, selection, balancing, and teleportation.
+ * Guarantees no players are teleported until an administrator has configured a lobby.
  */
 public class LobbyManager {
 
@@ -28,7 +28,7 @@ public class LobbyManager {
     private final Map<String, LobbyData> lobbies = new ConcurrentHashMap<>();
 
     @Getter
-    private String defaultLobbyId = "lobby-1";
+    private String defaultLobbyId = "";
 
     @Getter
     private boolean autoBalancing = true;
@@ -45,13 +45,12 @@ public class LobbyManager {
         lobbies.clear();
         FileConfiguration config = plugin.getConfigManager().getLobbies();
 
-        this.defaultLobbyId = config.getString("settings.default-lobby", "lobby-1");
+        this.defaultLobbyId = config.getString("settings.default-lobby", "");
         this.autoBalancing = config.getBoolean("settings.auto-balance", true);
 
         ConfigurationSection section = config.getConfigurationSection("lobbies");
         if (section == null) {
-            plugin.getLogger().info("No lobbies defined in lobbies.yml, initializing default fallback.");
-            ensureDefaultLobby();
+            plugin.getLogger().info("No lobbies currently configured in lobbies.yml. An administrator must set a lobby via /setlobby or the Lobby Manager GUI.");
             return;
         }
 
@@ -82,44 +81,43 @@ public class LobbyManager {
             lobbies.put(id.toLowerCase(Locale.ROOT), data);
         }
 
-        if (lobbies.isEmpty()) {
-            ensureDefaultLobby();
+        // If default lobby ID is unset or invalid, pick the first valid lobby if available
+        if ((defaultLobbyId.isEmpty() || !lobbies.containsKey(defaultLobbyId.toLowerCase(Locale.ROOT))) && !lobbies.isEmpty()) {
+            this.defaultLobbyId = lobbies.keySet().iterator().next();
         }
     }
 
-    private void ensureDefaultLobby() {
-        World defaultWorld = Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().getFirst();
-        if (defaultWorld == null) return;
-
-        Location spawnLoc = defaultWorld.getSpawnLocation().clone().add(0.5, 0.5, 0.5);
-        LobbyData defaultData = LobbyData.builder()
-                .id("lobby-1")
-                .displayName("<gradient:#00f2fe:#4facfe>Main Lobby</gradient>")
-                .spawnLocation(spawnLoc)
-                .maxPlayers(150)
-                .permission(null)
-                .enabled(true)
-                .build();
-
-        lobbies.put("lobby-1", defaultData);
-        saveLobby(defaultData);
+    /**
+     * Checks if at least one valid, enabled lobby spawn has been configured by an administrator.
+     */
+    public boolean hasLobbiesSet() {
+        if (lobbies.isEmpty()) {
+            return false;
+        }
+        for (LobbyData lobby : lobbies.values()) {
+            if (lobby.isEnabled() && lobby.getSpawnLocation() != null && lobby.getSpawnLocation().getWorld() != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
      * Finds the best lobby for the player (least populated if auto-balancing).
+     * Returns null if no lobby has been configured yet.
      *
      * @param player Target player
-     * @return Selected LobbyData or null
+     * @return Selected LobbyData or null if no lobby is configured
      */
     @Nullable
     public LobbyData getBestLobby(@NotNull Player player) {
-        if (lobbies.isEmpty()) {
+        if (!hasLobbiesSet()) {
             return null;
         }
 
         if (!autoBalancing) {
-            LobbyData def = lobbies.get(defaultLobbyId.toLowerCase(Locale.ROOT));
-            if (def != null && def.canAccess(player::hasPermission)) {
+            LobbyData def = !defaultLobbyId.isEmpty() ? lobbies.get(defaultLobbyId.toLowerCase(Locale.ROOT)) : null;
+            if (def != null && def.isEnabled() && def.canAccess(player::hasPermission)) {
                 return def;
             }
         }
@@ -128,7 +126,7 @@ public class LobbyManager {
         int minCount = Integer.MAX_VALUE;
 
         for (LobbyData data : lobbies.values()) {
-            if (!data.canAccess(player::hasPermission)) continue;
+            if (!data.isEnabled() || !data.canAccess(player::hasPermission)) continue;
 
             int count = getPlayerCountInLobby(data);
             if (count < data.getMaxPlayers() && count < minCount) {
@@ -137,21 +135,29 @@ public class LobbyManager {
             }
         }
 
-        // Fallback to default if all full
-        if (best == null) {
-            best = lobbies.get(defaultLobbyId.toLowerCase(Locale.ROOT));
+        // Fallback to default if all are full
+        if (best == null && !defaultLobbyId.isEmpty()) {
+            LobbyData def = lobbies.get(defaultLobbyId.toLowerCase(Locale.ROOT));
+            if (def != null && def.isEnabled() && def.canAccess(player::hasPermission)) {
+                best = def;
+            }
         }
 
-        // Fallback to any valid lobby
-        if (best == null && !lobbies.isEmpty()) {
-            best = lobbies.values().iterator().next();
+        // Fallback to any valid enabled lobby
+        if (best == null) {
+            for (LobbyData data : lobbies.values()) {
+                if (data.isEnabled() && data.canAccess(player::hasPermission)) {
+                    best = data;
+                    break;
+                }
+            }
         }
 
         return best;
     }
 
     /**
-     * Counts how many players are in the world corresponding to a lobby.
+     * Counts how many players are in the world corresponding to a lobby using O(1) player count.
      *
      * @param data LobbyData
      * @return Current player count
@@ -218,7 +224,39 @@ public class LobbyManager {
                 .build();
 
         lobbies.put(key, lobby);
+
+        if (defaultLobbyId.isEmpty()) {
+            setDefaultLobbyId(key);
+        }
+
         saveLobby(lobby);
+
+        // Also update protection world set dynamically
+        if (plugin.getWorldProtectionListener() != null) {
+            plugin.getWorldProtectionListener().reloadConfig();
+        }
+    }
+
+    /**
+     * Updates default lobby identifier and persists to file.
+     *
+     * @param defaultLobbyId New default lobby identifier
+     */
+    public void setDefaultLobbyId(@NotNull String defaultLobbyId) {
+        this.defaultLobbyId = defaultLobbyId.toLowerCase(Locale.ROOT);
+        plugin.getConfigManager().getLobbies().set("settings.default-lobby", this.defaultLobbyId);
+        plugin.getConfigManager().getLobbiesConfig().saveAsync();
+    }
+
+    /**
+     * Updates auto-balancing state and persists to file.
+     *
+     * @param autoBalancing New auto-balancing toggle
+     */
+    public void setAutoBalancing(boolean autoBalancing) {
+        this.autoBalancing = autoBalancing;
+        plugin.getConfigManager().getLobbies().set("settings.auto-balance", autoBalancing);
+        plugin.getConfigManager().getLobbiesConfig().saveAsync();
     }
 
     /**
@@ -252,7 +290,15 @@ public class LobbyManager {
         if (lobbies.remove(key) != null) {
             FileConfiguration config = plugin.getConfigManager().getLobbies();
             config.set("lobbies." + key, null);
+            if (key.equalsIgnoreCase(defaultLobbyId)) {
+                this.defaultLobbyId = lobbies.isEmpty() ? "" : lobbies.keySet().iterator().next();
+                config.set("settings.default-lobby", this.defaultLobbyId);
+            }
             plugin.getConfigManager().getLobbiesConfig().saveAsync();
+
+            if (plugin.getWorldProtectionListener() != null) {
+                plugin.getWorldProtectionListener().reloadConfig();
+            }
             return true;
         }
         return false;
