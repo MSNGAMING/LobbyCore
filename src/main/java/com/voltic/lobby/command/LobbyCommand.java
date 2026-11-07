@@ -3,22 +3,21 @@ package com.voltic.lobby.command;
 import com.voltic.lobby.LobbyPlugin;
 import com.voltic.lobby.lobby.LobbyData;
 import com.voltic.lobby.util.TextUtil;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
+import io.papermc.paper.command.brigadier.BasicCommand;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
 /**
- * Command to teleport to a lobby or the auto-balanced default lobby.
+ * Modern Paper native BasicCommand for teleporting to a lobby or the auto-balanced default lobby.
  */
-public class LobbyCommand implements CommandExecutor, TabCompleter {
+public class LobbyCommand implements BasicCommand {
 
     private final LobbyPlugin plugin;
 
@@ -27,44 +26,45 @@ public class LobbyCommand implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+    public void execute(@NotNull CommandSourceStack stack, @NotNull String[] args) {
+        CommandSender sender = stack.getSender();
         if (!(sender instanceof Player player)) {
             sender.sendMessage(TextUtil.parse("<red>Only players can execute /lobby.</red>"));
-            return true;
+            return;
         }
 
         if (!plugin.getLobbyManager().hasLobbiesSet()) {
             player.sendMessage(TextUtil.parse("<red>The lobby spawn point has not been configured yet!</red> <gray>Please ask an administrator to set one via <yellow>/setlobby</yellow>.</gray>"));
-            return true;
+            return;
         }
 
         if (args.length == 0) {
             LobbyData best = plugin.getLobbyManager().getBestLobby(player);
             if (best == null) {
                 player.sendMessage(TextUtil.parse("<red>No accessible lobbies are currently configured!</red>"));
-                return true;
+                return;
             }
             plugin.getLobbyManager().teleportToLobby(player, best.getId());
-            return true;
+            return;
         }
 
         String targetLobby = args[0].toLowerCase(Locale.ROOT);
         LobbyData lobby = plugin.getLobbyManager().getLobby(targetLobby);
         if (lobby == null) {
             player.sendMessage(TextUtil.parse("<red>Lobby '" + targetLobby + "' does not exist!</red>"));
-            return true;
+            return;
         }
 
         plugin.getLobbyManager().teleportToLobby(player, lobby.getId());
-        return true;
     }
 
     @Override
-    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (args.length == 1) {
+    public Collection<String> suggest(@NotNull CommandSourceStack stack, @NotNull String[] args) {
+        if (args.length <= 1) {
+            String prefix = args.length == 1 ? args[0].toLowerCase(Locale.ROOT) : "";
             List<String> suggestions = new ArrayList<>();
             for (String id : plugin.getLobbyManager().getLobbies().keySet()) {
-                if (id.toLowerCase(Locale.ROOT).startsWith(args[0].toLowerCase(Locale.ROOT))) {
+                if (id.toLowerCase(Locale.ROOT).startsWith(prefix)) {
                     suggestions.add(id);
                 }
             }

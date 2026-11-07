@@ -18,12 +18,14 @@ import com.voltic.lobby.npc.NpcManager;
 import com.voltic.lobby.scoreboard.ScoreboardManager;
 import com.voltic.lobby.tab.TabManager;
 import com.voltic.lobby.util.TextUtil;
+import io.papermc.paper.command.brigadier.Commands;
+import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import lombok.Getter;
-import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 
@@ -183,25 +185,15 @@ public class LobbyPlugin extends JavaPlugin {
         pm.registerEvents(new AnvilListener(this), this);
     }
 
+    @SuppressWarnings("UnstableApiUsage")
     private void registerCommands() {
-        registerCmd("lobby", new LobbyCommand(this));
-        registerCmd("setlobby", new SetLobbyCommand(this));
-        registerCmd("hologram", new HologramCommand(this));
-        registerCmd("npc", new NpcCommand(this));
-        registerCmd("lobbyadmin", new LobbyAdminCommand(this));
-    }
-
-    private void registerCmd(String name, Object executor) {
-        PluginCommand cmd = getCommand(name);
-        if (cmd != null) {
-            if (executor instanceof org.bukkit.command.CommandExecutor ce) {
-                cmd.setExecutor(ce);
-            }
-            if (executor instanceof org.bukkit.command.TabCompleter tc) {
-                cmd.setTabCompleter(tc);
-            }
-        } else {
-            getLogger().warning("Command '" + name + "' is not registered in plugin.yml!");
-        }
+        this.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
+            final Commands commands = event.registrar();
+            commands.register("lobby", "Teleport to a lobby or the auto-balanced hub", List.of("hub", "l", "spawn"), new LobbyCommand(this));
+            commands.register("setlobby", "Set the spawn location for a lobby world", List.of("sethub"), new SetLobbyCommand(this));
+            commands.register("hologram", "Manage modern TextDisplay holograms", List.of("holo", "hd"), new HologramCommand(this));
+            commands.register("npc", "Manage Paper Interaction and visual NPCs", List.of(), new NpcCommand(this));
+            commands.register("lobbyadmin", "Open the interactive In-Game Configuration GUI or hot-reload", List.of("lobbygui", "hubadmin"), new LobbyAdminCommand(this));
+        });
     }
 }

@@ -3,22 +3,21 @@ package com.voltic.lobby.command;
 import com.voltic.lobby.LobbyPlugin;
 import com.voltic.lobby.lobby.LobbyData;
 import com.voltic.lobby.util.TextUtil;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
+import io.papermc.paper.command.brigadier.BasicCommand;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
 /**
- * Command to set the lobby spawn location.
+ * Modern Paper native BasicCommand for setting a lobby spawn location.
  */
-public class SetLobbyCommand implements CommandExecutor, TabCompleter {
+public class SetLobbyCommand implements BasicCommand {
 
     private final LobbyPlugin plugin;
 
@@ -27,15 +26,16 @@ public class SetLobbyCommand implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+    public String permission() {
+        return "lobby.admin.setlobby";
+    }
+
+    @Override
+    public void execute(@NotNull CommandSourceStack stack, @NotNull String[] args) {
+        CommandSender sender = stack.getSender();
         if (!(sender instanceof Player player)) {
             sender.sendMessage(TextUtil.parse("<red>Only players can execute /setlobby.</red>"));
-            return true;
-        }
-
-        if (!player.hasPermission("lobby.admin.setlobby")) {
-            player.sendMessage(TextUtil.parse("<red>You do not have permission to execute this command.</red>"));
-            return true;
+            return;
         }
 
         String lobbyId = args.length > 0 ? args[0].toLowerCase(Locale.ROOT) : "lobby-1";
@@ -46,15 +46,15 @@ public class SetLobbyCommand implements CommandExecutor, TabCompleter {
 
         plugin.getLobbyManager().setLobby(lobbyId, player.getLocation(), displayName, maxPlayers);
         player.sendMessage(TextUtil.parse("<green>Spawn point for <yellow>" + lobbyId + "</yellow> set to your current location!</green>"));
-        return true;
     }
 
     @Override
-    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (args.length == 1) {
+    public Collection<String> suggest(@NotNull CommandSourceStack stack, @NotNull String[] args) {
+        if (args.length <= 1) {
+            String prefix = args.length == 1 ? args[0].toLowerCase(Locale.ROOT) : "";
             List<String> list = new ArrayList<>();
             for (String key : plugin.getLobbyManager().getLobbies().keySet()) {
-                if (key.startsWith(args[0].toLowerCase(Locale.ROOT))) {
+                if (key.startsWith(prefix)) {
                     list.add(key);
                 }
             }

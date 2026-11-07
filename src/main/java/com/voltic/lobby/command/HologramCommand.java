@@ -3,23 +3,22 @@ package com.voltic.lobby.command;
 import com.voltic.lobby.LobbyPlugin;
 import com.voltic.lobby.hologram.Hologram;
 import com.voltic.lobby.util.TextUtil;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
+import io.papermc.paper.command.brigadier.BasicCommand;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
 /**
- * Command for managing TextDisplay holograms.
+ * Modern Paper native BasicCommand for managing TextDisplay holograms.
  */
-public class HologramCommand implements CommandExecutor, TabCompleter {
+public class HologramCommand implements BasicCommand {
 
     private final LobbyPlugin plugin;
 
@@ -28,15 +27,21 @@ public class HologramCommand implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+    public String permission() {
+        return "lobby.admin.hologram";
+    }
+
+    @Override
+    public void execute(@NotNull CommandSourceStack stack, @NotNull String[] args) {
+        CommandSender sender = stack.getSender();
         if (!sender.hasPermission("lobby.admin.hologram")) {
             sender.sendMessage(TextUtil.parse("<red>You do not have permission to manage holograms.</red>"));
-            return true;
+            return;
         }
 
         if (args.length == 0) {
             sendHelp(sender);
-            return true;
+            return;
         }
 
         String sub = args[0].toLowerCase(Locale.ROOT);
@@ -44,11 +49,11 @@ public class HologramCommand implements CommandExecutor, TabCompleter {
             case "create" -> {
                 if (!(sender instanceof Player player)) {
                     sender.sendMessage(TextUtil.parse("<red>Only players can create holograms at their position.</red>"));
-                    return true;
+                    return;
                 }
                 if (args.length < 3) {
                     player.sendMessage(TextUtil.parse("<red>Usage: /holo create <id> <text...></red>"));
-                    return true;
+                    return;
                 }
                 String id = args[1].toLowerCase(Locale.ROOT);
                 String line = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
@@ -58,7 +63,7 @@ public class HologramCommand implements CommandExecutor, TabCompleter {
             case "delete", "remove" -> {
                 if (args.length < 2) {
                     sender.sendMessage(TextUtil.parse("<red>Usage: /holo delete <id></red>"));
-                    return true;
+                    return;
                 }
                 String id = args[1].toLowerCase(Locale.ROOT);
                 if (plugin.getHologramManager().deleteHologram(id)) {
@@ -70,13 +75,13 @@ public class HologramCommand implements CommandExecutor, TabCompleter {
             case "addline" -> {
                 if (args.length < 3) {
                     sender.sendMessage(TextUtil.parse("<red>Usage: /holo addline <id> <text...></red>"));
-                    return true;
+                    return;
                 }
                 String id = args[1].toLowerCase(Locale.ROOT);
                 Hologram holo = plugin.getHologramManager().getHologram(id);
                 if (holo == null) {
                     sender.sendMessage(TextUtil.parse("<red>Hologram not found!</red>"));
-                    return true;
+                    return;
                 }
                 String text = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
                 List<String> currentLines = new ArrayList<>(holo.getLines());
@@ -97,7 +102,6 @@ public class HologramCommand implements CommandExecutor, TabCompleter {
             }
             default -> sendHelp(sender);
         }
-        return true;
     }
 
     private void sendHelp(CommandSender sender) {
@@ -110,12 +114,17 @@ public class HologramCommand implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (args.length == 1) {
-            return List.of("create", "delete", "addline", "list", "reload");
+    public Collection<String> suggest(@NotNull CommandSourceStack stack, @NotNull String[] args) {
+        if (args.length <= 1) {
+            String prefix = args.length == 1 ? args[0].toLowerCase(Locale.ROOT) : "";
+            List<String> list = List.of("create", "delete", "addline", "list", "reload");
+            return list.stream().filter(s -> s.startsWith(prefix)).toList();
         }
         if (args.length == 2 && (args[0].equalsIgnoreCase("delete") || args[0].equalsIgnoreCase("addline"))) {
-            return new ArrayList<>(plugin.getHologramManager().getHolograms().keySet());
+            String prefix = args[1].toLowerCase(Locale.ROOT);
+            return plugin.getHologramManager().getHolograms().keySet().stream()
+                    .filter(s -> s.toLowerCase(Locale.ROOT).startsWith(prefix))
+                    .toList();
         }
         return List.of();
     }

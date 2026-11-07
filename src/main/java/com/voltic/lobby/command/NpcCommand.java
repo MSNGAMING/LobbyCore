@@ -3,24 +3,23 @@ package com.voltic.lobby.command;
 import com.voltic.lobby.LobbyPlugin;
 import com.voltic.lobby.npc.NpcData;
 import com.voltic.lobby.util.TextUtil;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
+import io.papermc.paper.command.brigadier.BasicCommand;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
 /**
- * Command for managing Paper Interaction/visual NPCs.
+ * Modern Paper native BasicCommand for managing Paper Interaction/visual NPCs.
  */
-public class NpcCommand implements CommandExecutor, TabCompleter {
+public class NpcCommand implements BasicCommand {
 
     private final LobbyPlugin plugin;
 
@@ -29,15 +28,21 @@ public class NpcCommand implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+    public String permission() {
+        return "lobby.admin.npc";
+    }
+
+    @Override
+    public void execute(@NotNull CommandSourceStack stack, @NotNull String[] args) {
+        CommandSender sender = stack.getSender();
         if (!sender.hasPermission("lobby.admin.npc")) {
             sender.sendMessage(TextUtil.parse("<red>You do not have permission to manage NPCs.</red>"));
-            return true;
+            return;
         }
 
         if (args.length == 0) {
             sendHelp(sender);
-            return true;
+            return;
         }
 
         String sub = args[0].toLowerCase(Locale.ROOT);
@@ -45,11 +50,11 @@ public class NpcCommand implements CommandExecutor, TabCompleter {
             case "create" -> {
                 if (!(sender instanceof Player player)) {
                     sender.sendMessage(TextUtil.parse("<red>Only players can create an NPC at their position.</red>"));
-                    return true;
+                    return;
                 }
                 if (args.length < 4) {
                     player.sendMessage(TextUtil.parse("<red>Usage: /npc create <id> <entity_type> <name></red>"));
-                    return true;
+                    return;
                 }
                 String id = args[1].toLowerCase(Locale.ROOT);
                 EntityType type;
@@ -57,7 +62,7 @@ public class NpcCommand implements CommandExecutor, TabCompleter {
                     type = EntityType.valueOf(args[2].toUpperCase(Locale.ROOT));
                 } catch (IllegalArgumentException e) {
                     player.sendMessage(TextUtil.parse("<red>Invalid entity type: " + args[2] + "</red>"));
-                    return true;
+                    return;
                 }
                 String name = String.join(" ", Arrays.copyOfRange(args, 3, args.length));
 
@@ -67,7 +72,7 @@ public class NpcCommand implements CommandExecutor, TabCompleter {
             case "delete", "remove" -> {
                 if (args.length < 2) {
                     sender.sendMessage(TextUtil.parse("<red>Usage: /npc delete <id></red>"));
-                    return true;
+                    return;
                 }
                 String id = args[1].toLowerCase(Locale.ROOT);
                 if (plugin.getNpcManager().deleteNpc(id)) {
@@ -79,20 +84,20 @@ public class NpcCommand implements CommandExecutor, TabCompleter {
             case "action" -> {
                 if (args.length < 4) {
                     sender.sendMessage(TextUtil.parse("<red>Usage: /npc action <id> <COMMAND|TELEPORT|MESSAGE|GUI> <value></red>"));
-                    return true;
+                    return;
                 }
                 String id = args[1].toLowerCase(Locale.ROOT);
                 NpcData npc = plugin.getNpcManager().getNpc(id);
                 if (npc == null) {
                     sender.sendMessage(TextUtil.parse("<red>NPC not found!</red>"));
-                    return true;
+                    return;
                 }
                 NpcData.ActionType actionType;
                 try {
                     actionType = NpcData.ActionType.valueOf(args[2].toUpperCase(Locale.ROOT));
                 } catch (IllegalArgumentException e) {
                     sender.sendMessage(TextUtil.parse("<red>Invalid action type. Must be: COMMAND, TELEPORT, MESSAGE, GUI</red>"));
-                    return true;
+                    return;
                 }
                 String value = String.join(" ", Arrays.copyOfRange(args, 3, args.length));
                 npc.setActionType(actionType);
@@ -103,17 +108,17 @@ public class NpcCommand implements CommandExecutor, TabCompleter {
             case "movehere" -> {
                 if (!(sender instanceof Player player)) {
                     sender.sendMessage(TextUtil.parse("<red>Only players can move NPCs.</red>"));
-                    return true;
+                    return;
                 }
                 if (args.length < 2) {
                     player.sendMessage(TextUtil.parse("<red>Usage: /npc movehere <id></red>"));
-                    return true;
+                    return;
                 }
                 String id = args[1].toLowerCase(Locale.ROOT);
                 NpcData npc = plugin.getNpcManager().getNpc(id);
                 if (npc == null) {
                     player.sendMessage(TextUtil.parse("<red>NPC not found!</red>"));
-                    return true;
+                    return;
                 }
                 npc.setLocation(player.getLocation());
                 plugin.getNpcManager().saveNpc(npc);
@@ -128,7 +133,6 @@ public class NpcCommand implements CommandExecutor, TabCompleter {
             }
             default -> sendHelp(sender);
         }
-        return true;
     }
 
     private void sendHelp(CommandSender sender) {
@@ -141,18 +145,27 @@ public class NpcCommand implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (args.length == 1) {
-            return List.of("create", "delete", "action", "movehere", "list");
+    public Collection<String> suggest(@NotNull CommandSourceStack stack, @NotNull String[] args) {
+        if (args.length <= 1) {
+            String prefix = args.length == 1 ? args[0].toLowerCase(Locale.ROOT) : "";
+            List<String> list = List.of("create", "delete", "action", "movehere", "list");
+            return list.stream().filter(s -> s.startsWith(prefix)).toList();
         }
         if (args.length == 2 && (args[0].equalsIgnoreCase("delete") || args[0].equalsIgnoreCase("action") || args[0].equalsIgnoreCase("movehere"))) {
-            return new ArrayList<>(plugin.getNpcManager().getNpcs().keySet());
+            String prefix = args[1].toLowerCase(Locale.ROOT);
+            return plugin.getNpcManager().getNpcs().keySet().stream()
+                    .filter(s -> s.toLowerCase(Locale.ROOT).startsWith(prefix))
+                    .toList();
         }
         if (args.length == 3 && args[0].equalsIgnoreCase("create")) {
-            return List.of("VILLAGER", "ALLAY", "IRON_GOLEM", "ARMOR_STAND", "ZOMBIE", "SKELETON", "WANDERING_TRADER");
+            String prefix = args[2].toUpperCase(Locale.ROOT);
+            List<String> types = List.of("VILLAGER", "ALLAY", "IRON_GOLEM", "ARMOR_STAND", "ZOMBIE", "SKELETON", "WANDERING_TRADER");
+            return types.stream().filter(s -> s.startsWith(prefix)).toList();
         }
         if (args.length == 3 && args[0].equalsIgnoreCase("action")) {
-            return List.of("COMMAND", "TELEPORT", "MESSAGE", "GUI");
+            String prefix = args[2].toUpperCase(Locale.ROOT);
+            List<String> actions = List.of("COMMAND", "TELEPORT", "MESSAGE", "GUI");
+            return actions.stream().filter(s -> s.startsWith(prefix)).toList();
         }
         return List.of();
     }
