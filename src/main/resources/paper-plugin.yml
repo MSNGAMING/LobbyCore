@@ -23,6 +23,8 @@ permissions:
       lobby.admin.hologram: true
       lobby.admin.npc: true
       lobby.admin.build: true
+      lobby.admin.maintenance: true
+      lobby.maintenance.bypass: true
       lobby.chat.bypass: true
       lobby.chat.color: true
   lobby.admin.gui:
@@ -36,6 +38,12 @@ permissions:
     default: op
   lobby.admin.npc:
     description: Allows creating and managing NPCs.
+    default: op
+  lobby.admin.maintenance:
+    description: Allows toggling and managing maintenance mode.
+    default: op
+  lobby.maintenance.bypass:
+    description: Allows bypassing maintenance mode restriction and remaining connected.
     default: op
   lobby.admin.build:
     description: Bypass block break and place restrictions in protected lobby worlds.

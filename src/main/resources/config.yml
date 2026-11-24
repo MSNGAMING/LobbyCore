@@ -68,3 +68,17 @@ hotbar:
   enabled: true
   # Prevent moving, dropping, or swapping hotbar items in inventory
   lock-slots: true
+
+# Maintenance Mode
+maintenance:
+  # If true, only players with 'lobby.maintenance.bypass' or OP can join
+  enabled: false
+  # Disconnect screen shown to non-exempt players
+  kick-message:
+    - "<gradient:#ff416c:#ff4b2b><bold>✦ VOLTIC NETWORK ✦</bold></gradient>"
+    - "<yellow>The network is currently under scheduled maintenance.</yellow>"
+    - ""
+    - "<gray>We are actively applying performance and game updates.</gray>"
+    - "<gray>Please check back soon or visit our Discord for announcements!</gray>"
+    - ""
+    - "<white>Discord: <aqua>discord.gg/voltic</aqua></white>"

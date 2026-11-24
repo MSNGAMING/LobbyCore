@@ -2,6 +2,8 @@ package com.voltic.lobby.listener;
 
 import com.voltic.lobby.LobbyPlugin;
 import com.voltic.lobby.lobby.LobbyData;
+import org.bukkit.Bukkit;
+import org.bukkit.GameRule;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -16,7 +18,10 @@ import org.bukkit.event.entity.*;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.weather.LightningStrikeEvent;
+import org.bukkit.event.weather.ThunderChangeEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
+import org.bukkit.event.world.WorldLoadEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -81,6 +86,29 @@ public class WorldProtectionListener implements Listener {
         this.weatherLockEnabled = config.getBoolean("protection.weather-lock", true);
         this.itemDropEnabled = config.getBoolean("protection.item-drop", false);
         this.itemPickupEnabled = config.getBoolean("protection.item-pickup", false);
+
+        if (this.weatherLockEnabled) {
+            for (World world : Bukkit.getWorlds()) {
+                if (isProtectedWorld(world)) {
+                    lockWorldWeather(world);
+                }
+            }
+        }
+    }
+
+    /**
+     * Enforces permanent clear sunny weather and halts the weather cycle for a protected world.
+     */
+    public void lockWorldWeather(World world) {
+        if (world == null || !weatherLockEnabled) return;
+        if (!isProtectedWorld(world)) return;
+
+        world.setStorm(false);
+        world.setThundering(false);
+        world.setWeatherDuration(0);
+        world.setThunderDuration(0);
+        world.setClearWeatherDuration(Integer.MAX_VALUE);
+        world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
     }
 
     /**
@@ -170,6 +198,13 @@ public class WorldProtectionListener implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onWorldLoad(WorldLoadEvent event) {
+        if (weatherLockEnabled && isProtectedWorld(event.getWorld())) {
+            lockWorldWeather(event.getWorld());
+        }
+    }
+
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onWeatherChange(WeatherChangeEvent event) {
         if (!weatherLockEnabled) return;
@@ -178,6 +213,24 @@ public class WorldProtectionListener implements Listener {
         if (event.toWeatherState()) {
             event.setCancelled(true);
         }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onThunderChange(ThunderChangeEvent event) {
+        if (!weatherLockEnabled) return;
+        if (!isProtectedWorld(event.getWorld())) return;
+
+        if (event.toThunderState()) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onLightningStrike(LightningStrikeEvent event) {
+        if (!weatherLockEnabled) return;
+        if (!isProtectedWorld(event.getWorld())) return;
+
+        event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)

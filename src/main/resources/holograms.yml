@@ -5,37 +5,49 @@
 # Billboard options: CENTER, FIXED, HORIZONTAL, VERTICAL
 # ==============================================================================
 
-holograms:
-  welcome-holo:
+# Active holograms spawned in worlds. (Empty by default)
+# Create new holograms manually via /holo create <id> <text...>
+# Or spawn any of the presets below at your location via /holo preset <preset-name> [id]
+holograms: {}
+
+# Built-in presets that administrators can spawn anywhere using:
+# /holo preset <preset-name> [id]
+presets:
+  welcome:
     billboard: "CENTER"
     shadow: true
-    location:
-      world: "world"
-      x: 0.5
-      y: 66.5
-      z: 0.5
-      yaw: 0.0
-      pitch: 0.0
     lines:
       - "<gradient:#ffaa00:#ff5500><bold>✦ VOLTIC NETWORK ✦</bold></gradient>"
-      - "<gray>Welcome, <yellow>%player%</yellow>!</gray>"
+      - "<gray>Welcome to the lobby, <yellow>%player%</yellow>!</gray>"
       - ""
       - "<white>Online Players: <green>%online%</green>/<green>%max_players%</green></white>"
-      - "<yellow>Visit our store at: <gold>store.voltic.net</gold></yellow>"
+      - "<yellow>Visit our webstore at: <gold>store.voltic.net</gold></yellow>"
 
-  rules-holo:
+  rules:
     billboard: "CENTER"
     shadow: true
-    location:
-      world: "world"
-      x: 5.5
-      y: 66.0
-      z: 5.5
-      yaw: 45.0
-      pitch: 0.0
     lines:
-      - "<red><bold>SERVER RULES</bold></red>"
-      - "<gray>1. Be respectful to all players.</gray>"
+      - "<gradient:#ff416c:#ff4b2b><bold>✦ SERVER RULES ✦</bold></gradient>"
+      - "<gray>1. Be respectful to all players & staff.</gray>"
       - "<gray>2. No cheating, hacking, or exploiting.</gray>"
-      - "<gray>3. Keep chat clean and appropriate.</gray>"
+      - "<gray>3. Keep chat clean, appropriate & friendly.</gray>"
       - "<gray>4. Have fun and enjoy your stay!</gray>"
+
+  info:
+    billboard: "CENTER"
+    shadow: true
+    lines:
+      - "<gradient:#00f2fe:#4facfe><bold>✦ SERVER INFORMATION ✦</bold></gradient>"
+      - "<gray>Discord: <aqua>discord.gg/voltic</aqua></gray>"
+      - "<gray>Website: <aqua>www.voltic.net</aqua></gray>"
+      - "<gray>Store: <gold>store.voltic.net</gold></gray>"
+      - "<gray>Vote: <green>vote.voltic.net</green></gray>"
+
+  socials:
+    billboard: "CENTER"
+    shadow: true
+    lines:
+      - "<gradient:#8a2387:#e94057><bold>✦ SOCIAL MEDIA ✦</bold></gradient>"
+      - "<white>Discord: <aqua>discord.gg/voltic</aqua></white>"
+      - "<white>Twitter/X: <aqua>@VolticNetwork</aqua></white>"
+      - "<white>YouTube: <red>youtube.com/@Voltic</red></white>"

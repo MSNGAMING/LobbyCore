@@ -76,6 +76,15 @@ public class ServerListPingListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onServerListPing(PaperServerListPingEvent event) {
+        if (plugin.getMaintenanceManager() != null && plugin.getMaintenanceManager().isEnabled()) {
+            Component maintMotd = TextUtil.parse("<gradient:#ff416c:#ff4b2b><bold>VOLTIC NETWORK</bold></gradient> <gray>•</gray> <gold><bold>[MAINTENANCE]</bold></gold>")
+                    .append(Component.newline())
+                    .append(TextUtil.parse("<yellow>Servers undergoing maintenance. Please check back later!</yellow>"));
+            event.motd(maintMotd);
+            event.setVersion("Maintenance Mode");
+            return;
+        }
+
         if (!motdEnabled) {
             return;
         }

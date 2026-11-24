@@ -13,6 +13,7 @@ import com.voltic.lobby.listener.PlayerConnectionListener;
 import com.voltic.lobby.listener.ServerListPingListener;
 import com.voltic.lobby.listener.WorldProtectionListener;
 import com.voltic.lobby.lobby.LobbyManager;
+import com.voltic.lobby.maintenance.MaintenanceManager;
 import com.voltic.lobby.npc.NpcInteractListener;
 import com.voltic.lobby.npc.NpcManager;
 import com.voltic.lobby.scoreboard.ScoreboardManager;
@@ -54,6 +55,8 @@ public class LobbyPlugin extends JavaPlugin {
     @Getter
     private HotbarManager hotbarManager;
     @Getter
+    private MaintenanceManager maintenanceManager;
+    @Getter
     private WorldProtectionListener worldProtectionListener;
     @Getter
     private ServerListPingListener serverListPingListener;
@@ -92,6 +95,7 @@ public class LobbyPlugin extends JavaPlugin {
             this.tabManager = new TabManager(this);
             this.scoreboardManager = new ScoreboardManager(this);
             this.hotbarManager = new HotbarManager(this);
+            this.maintenanceManager = new MaintenanceManager(this);
 
             // Register events
             registerListeners();
@@ -166,6 +170,9 @@ public class LobbyPlugin extends JavaPlugin {
 
         hologramManager.loadHolograms();
         npcManager.loadNpcs();
+        if (maintenanceManager != null) {
+            maintenanceManager.loadConfig();
+        }
 
         getLogger().info("LobbyCore configuration files and features hot-reloaded.");
     }
@@ -194,6 +201,7 @@ public class LobbyPlugin extends JavaPlugin {
             commands.register("hologram", "Manage modern TextDisplay holograms", List.of("holo", "hd"), new HologramCommand(this));
             commands.register("npc", "Manage Paper Interaction and visual NPCs", List.of(), new NpcCommand(this));
             commands.register("lobbyadmin", "Open the interactive In-Game Configuration GUI or hot-reload", List.of("lobbygui", "hubadmin"), new LobbyAdminCommand(this));
+            commands.register("maintenance", "Toggle or manage server maintenance mode", List.of("maintenancemode", "maint"), new MaintenanceCommand(this));
         });
     }
 }

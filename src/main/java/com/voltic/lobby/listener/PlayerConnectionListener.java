@@ -29,6 +29,16 @@ public class PlayerConnectionListener implements Listener {
         this.plugin = plugin;
     }
 
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onPlayerLogin(org.bukkit.event.player.PlayerLoginEvent event) {
+        if (plugin.getMaintenanceManager() != null && plugin.getMaintenanceManager().isEnabled()) {
+            Player player = event.getPlayer();
+            if (!plugin.getMaintenanceManager().hasBypass(player)) {
+                event.disallow(org.bukkit.event.player.PlayerLoginEvent.Result.KICK_OTHER, plugin.getMaintenanceManager().getKickMessage());
+            }
+        }
+    }
+
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
@@ -106,6 +116,7 @@ public class PlayerConnectionListener implements Listener {
         plugin.getTabManager().cleanupPlayer(player.getUniqueId());
         plugin.getChatManager().cleanupPlayer(player.getUniqueId());
         plugin.getHotbarManager().cleanupPlayer(player.getUniqueId());
+        com.voltic.lobby.gui.GuiHistory.clear(player.getUniqueId());
         if (plugin.getWorldProtectionListener() != null) {
             plugin.getWorldProtectionListener().cleanupPlayer(player.getUniqueId());
         }

@@ -229,6 +229,21 @@ public class AdminConfigGui {
                 .tagString(ACTION_KEY, "OPEN_LOBBY_MANAGER")
                 .build());
 
+        // Slot 42: Maintenance Mode
+        boolean maint = plugin.getMaintenanceManager().isEnabled();
+        inv.setItem(42, ItemBuilder.from(maint ? Material.REDSTONE_TORCH : Material.LEVER)
+                .name("<gold><bold>Maintenance Mode</bold></gold>")
+                .loreStrings(
+                        "<gray>Restricts server entry exclusively to admins & staff.</gray>",
+                        "",
+                        "<white>Status: " + statusTag(maint),
+                        "",
+                        "<yellow>▶ Click to toggle Maintenance Mode</yellow>"
+                )
+                .glow(maint)
+                .tagString(ACTION_KEY, "TOGGLE_MAINTENANCE")
+                .build());
+
         // Slot 49: Hot-Reload Everything
         inv.setItem(49, ItemBuilder.from(Material.NETHER_STAR)
                 .name("<gradient:#00ff87:#60efff><bold>HOT-RELOAD ALL CONFIGURATIONS</bold></gradient>")

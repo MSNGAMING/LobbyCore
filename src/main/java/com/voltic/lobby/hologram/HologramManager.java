@@ -32,6 +32,11 @@ public class HologramManager {
     private final LobbyPlugin plugin;
     public final NamespacedKey holoKey;
 
+    public record HologramPreset(String name, Display.Billboard billboard, boolean shadow, List<String> lines) {}
+
+    @Getter
+    private final Map<String, HologramPreset> presets = new ConcurrentHashMap<>();
+
     @Getter
     private final Map<String, Hologram> holograms = new ConcurrentHashMap<>();
 
@@ -42,11 +47,12 @@ public class HologramManager {
     }
 
     /**
-     * Loads holograms from holograms.yml and spawns them.
+     * Loads presets and configured holograms from holograms.yml.
      */
     public void loadHolograms() {
         removeAllEntities();
         holograms.clear();
+        loadPresets();
 
         FileConfiguration config = plugin.getConfigManager().getHolograms();
         ConfigurationSection section = config.getConfigurationSection("holograms");
@@ -91,6 +97,60 @@ public class HologramManager {
             holograms.put(id.toLowerCase(Locale.ROOT), hologram);
             spawnHologramEntity(hologram);
         }
+    }
+
+    /**
+     * Loads built-in hologram presets from holograms.yml.
+     */
+    public void loadPresets() {
+        presets.clear();
+        FileConfiguration config = plugin.getConfigManager().getHolograms();
+        ConfigurationSection section = config.getConfigurationSection("presets");
+        if (section == null) return;
+
+        for (String key : section.getKeys(false)) {
+            ConfigurationSection pSec = section.getConfigurationSection(key);
+            if (pSec == null) continue;
+
+            String bStr = pSec.getString("billboard", "CENTER");
+            Display.Billboard billboard;
+            try {
+                billboard = Display.Billboard.valueOf(bStr.toUpperCase(Locale.ROOT));
+            } catch (Exception e) {
+                billboard = Display.Billboard.CENTER;
+            }
+            boolean shadow = pSec.getBoolean("shadow", true);
+            List<String> lines = pSec.getStringList("lines");
+
+            presets.put(key.toLowerCase(Locale.ROOT), new HologramPreset(key, billboard, shadow, lines));
+        }
+    }
+
+    /**
+     * Spawns a hologram using a pre-configured preset template at the given location and saves it.
+     *
+     * @param presetName Name of preset (e.g. welcome, rules, info)
+     * @param id         Unique hologram identifier
+     * @param location   Spawn location
+     * @return Created Hologram or null if preset not found
+     */
+    public Hologram spawnPreset(@NotNull String presetName, @NotNull String id, @NotNull Location location) {
+        HologramPreset preset = presets.get(presetName.toLowerCase(Locale.ROOT));
+        if (preset == null) return null;
+
+        String key = id.toLowerCase(Locale.ROOT);
+        Hologram holo = Hologram.builder()
+                .id(key)
+                .location(location)
+                .lines(new ArrayList<>(preset.lines()))
+                .billboard(preset.billboard())
+                .shadow(preset.shadow())
+                .build();
+
+        holograms.put(key, holo);
+        saveHologram(holo);
+        spawnHologramEntity(holo);
+        return holo;
     }
 
     /**

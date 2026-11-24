@@ -12,6 +12,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -64,6 +65,7 @@ public class GuiListener implements Listener {
 
             switch (action) {
                 case "OPEN_LOBBY_MANAGER" -> {
+                    GuiHistory.transition(player.getUniqueId(), () -> AdminConfigGui.open(player, plugin));
                     LobbyManagementGui.open(player, plugin);
                     return;
                 }
@@ -95,6 +97,7 @@ public class GuiListener implements Listener {
                 case "TOGGLE_CHAT" -> {
                     if (clickType.isShiftClick()) {
                         String currentFormat = chat.getString("chat.format", "");
+                        GuiHistory.markTransition(player.getUniqueId());
                         AnvilInputGui.open(plugin, player, "Edit Chat Format", currentFormat, newFormat -> {
                             chat.set("chat.format", newFormat);
                             plugin.getConfigManager().getChatConfig().saveAsync();
@@ -123,6 +126,7 @@ public class GuiListener implements Listener {
                         }
                     } else if (clickType.isRightClick()) {
                         String currentLine2 = motd.getString("motd.line2", "");
+                        GuiHistory.markTransition(player.getUniqueId());
                         AnvilInputGui.open(plugin, player, "Edit MOTD Line 2", currentLine2, newLine2 -> {
                             motd.set("motd.line2", newLine2);
                             plugin.getConfigManager().getMotdConfig().saveAsync();
@@ -135,6 +139,7 @@ public class GuiListener implements Listener {
                         return;
                     } else {
                         String currentLine1 = motd.getString("motd.line1", "");
+                        GuiHistory.markTransition(player.getUniqueId());
                         AnvilInputGui.open(plugin, player, "Edit MOTD Line 1", currentLine1, newLine1 -> {
                             motd.set("motd.line1", newLine1);
                             plugin.getConfigManager().getMotdConfig().saveAsync();
@@ -150,6 +155,7 @@ public class GuiListener implements Listener {
                 case "TOGGLE_SCOREBOARD" -> {
                     if (clickType.isShiftClick()) {
                         String currentTitle = sb.getString("scoreboard.title", "");
+                        GuiHistory.markTransition(player.getUniqueId());
                         AnvilInputGui.open(plugin, player, "Edit Scoreboard Title", currentTitle, newTitle -> {
                             sb.set("scoreboard.title", newTitle);
                             plugin.getConfigManager().getScoreboardConfig().saveAsync();
@@ -188,12 +194,19 @@ public class GuiListener implements Listener {
                         plugin.getWorldProtectionListener().reloadConfig();
                     }
                 }
+                case "TOGGLE_MAINTENANCE" -> {
+                    plugin.getMaintenanceManager().toggleMaintenance(player);
+                }
                 case "RELOAD_ALL" -> {
                     plugin.reloadPlugin();
                     player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.0f);
                     player.sendMessage(TextUtil.parse("<green><bold>All configurations and managers hot-reloaded successfully!</bold></green>"));
                 }
-                case "CLOSE" -> player.closeInventory();
+                case "CLOSE" -> {
+                    GuiHistory.markExplicitClose(player.getUniqueId());
+                    GuiHistory.clear(player.getUniqueId());
+                    player.closeInventory();
+                }
             }
 
             if (!"CLOSE".equals(action)) {
@@ -222,8 +235,16 @@ public class GuiListener implements Listener {
             player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.6f, 1.2f);
 
             switch (action) {
-                case "BACK_ADMIN" -> AdminConfigGui.open(player, plugin);
-                case "CLOSE" -> player.closeInventory();
+                case "BACK_ADMIN" -> {
+                    GuiHistory.pop(player.getUniqueId());
+                    GuiHistory.markTransition(player.getUniqueId());
+                    AdminConfigGui.open(player, plugin);
+                }
+                case "CLOSE" -> {
+                    GuiHistory.markExplicitClose(player.getUniqueId());
+                    GuiHistory.clear(player.getUniqueId());
+                    player.closeInventory();
+                }
                 case "TOGGLE_AUTOBALANCE" -> {
                     boolean next = !plugin.getLobbyManager().isAutoBalancing();
                     plugin.getLobbyManager().setAutoBalancing(next);
@@ -241,6 +262,7 @@ public class GuiListener implements Listener {
                 }
                 case "CREATE_LOBBY" -> {
                     String suggestedId = "lobby-" + (plugin.getLobbyManager().getLobbies().size() + 1);
+                    GuiHistory.markTransition(player.getUniqueId());
                     AnvilInputGui.open(plugin, player, "Enter New Lobby ID", suggestedId, newId -> {
                         String cleanId = newId.trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_-]", "");
                         if (cleanId.isEmpty()) {
@@ -279,6 +301,8 @@ public class GuiListener implements Listener {
                         player.sendMessage(TextUtil.parse("<yellow>Lobby <gold>" + lobbyId + "</gold> is now " + (lobby.isEnabled() ? "<green><bold>ENABLED</bold></green>" : "<red><bold>DISABLED</bold></red>") + "<yellow>!</yellow>"));
                         LobbyManagementGui.refresh(topInv, plugin);
                     } else if (clickType.isLeftClick()) {
+                        GuiHistory.markExplicitClose(player.getUniqueId());
+                        GuiHistory.clear(player.getUniqueId());
                         player.closeInventory();
                         plugin.getLobbyManager().teleportToLobby(player, lobbyId);
                     }
@@ -292,6 +316,43 @@ public class GuiListener implements Listener {
         if (event.getInventory().getHolder() instanceof AdminGuiHolder ||
                 event.getInventory().getHolder() instanceof LobbyManagementGuiHolder) {
             event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onInventoryClose(InventoryCloseEvent event) {
+        if (!(event.getPlayer() instanceof Player player)) {
+            return;
+        }
+
+        // Only handle LobbyCore managed inventory holders
+        if (!(event.getInventory().getHolder() instanceof AdminGuiHolder) &&
+                !(event.getInventory().getHolder() instanceof LobbyManagementGuiHolder)) {
+            return;
+        }
+
+        // If player is transitioning between menus (e.g. parent -> child or opening anvil), ignore
+        if (GuiHistory.checkAndConsumeTransition(player.getUniqueId())) {
+            return;
+        }
+
+        // If player explicitly closed the GUI (clicking Close button or teleporting), do not redirect
+        if (GuiHistory.checkAndConsumeExplicitClose(player.getUniqueId())) {
+            GuiHistory.clear(player.getUniqueId());
+            return;
+        }
+
+        // Player pressed 'Esc' to exit - redirect to the previous GUI if one exists in the navigation stack
+        Runnable previous = GuiHistory.pop(player.getUniqueId());
+        if (previous != null) {
+            player.getScheduler().run(plugin, task -> {
+                if (player.isOnline()) {
+                    player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.3f);
+                    previous.run();
+                }
+            }, null);
+        } else {
+            GuiHistory.clear(player.getUniqueId());
         }
     }
 }
